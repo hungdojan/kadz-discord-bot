@@ -1,0 +1,11 @@
+name: kadz-discord-bot-devel
+
+services:
+  discord-bot:
+    build:
+      context: .
+      dockerfile: DevContainerfile
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src:z
