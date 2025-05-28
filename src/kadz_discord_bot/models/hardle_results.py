@@ -39,10 +39,10 @@ class HardleResultManager(BaseManager):
         query = select(HardleResults).where(
             and_(
                 HardleResults.username == username,
-                cast(HardleResults.day_play, Date) == day,
+                HardleResults.day_play == day,
             )
         )
-        result = self.session.execute(query).scalar_one_or_none()
+        result = self.session.execute(query).scalar()
         return result
 
     def get_user_results_monthly(self, username: str, month: int, year: int):
@@ -73,7 +73,7 @@ class HardleResultManager(BaseManager):
             day_play=day_play,
             timestamp=timestamp,
             rounds=rounds,
-        )  # type: ignore
+        )
         self.session.add(hr)
         self.session.commit()
         return hr

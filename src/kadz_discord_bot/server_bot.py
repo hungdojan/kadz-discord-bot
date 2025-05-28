@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from kadz_discord_bot.cogs.hardle_commands import HardleCommands
 from kadz_discord_bot.database import Database
+from kadz_discord_bot.exceptions import DailyResultExistError
 from kadz_discord_bot.models.hardle_results import HardleResultManager
 from kadz_discord_bot.models.user import UserManager
 from kadz_discord_bot.utils import decode_hardle_result
@@ -38,9 +39,12 @@ class ServerBot(commands.Bot):
     async def on_message(self, message: Message, /) -> None:
         # logic for hardle channel
         if message.channel.id == self.channel_ids.get("hardle", -1):
-            self.hardle_channel_logic(message)
+            try:
+                await self.hardle_channel_logic(message)
+            except DailyResultExistError as e:
+                await message.channel.send(str(e))
 
-    def hardle_channel_logic(self, message: Message) -> None:
+    async def hardle_channel_logic(self, message: Message) -> None:
         """Handle messages in `hardle` channel.
 
         :param message: The message object.
@@ -57,6 +61,15 @@ class ServerBot(commands.Bot):
         username = message.author.name
 
         user = UserManager(self.db_session).get_or_insert_user(username)
+        daily_result = HardleResultManager(self.db_session).get_user_results_daily(
+            user.username, day
+        )
+        if daily_result:
+            raise DailyResultExistError(
+                f"Run by `{user.username}` from `{day}` already exists."
+            )
+
         HardleResultManager(self.db_session).insert_result(
             user.username, nof_tries, day, datetime.now(timezone.utc), run
         )
+        await message.reply(f"Run by `{user.username}` from `{day}` is registered.")

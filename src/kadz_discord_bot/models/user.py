@@ -42,7 +42,7 @@ class UserManager(BaseManager):
         user = self.get_user(username)
         if user:
             return user
-        user = Users(username, date_of_birth) # type: ignore
+        user = Users(username=username, date_of_birth=date_of_birth)
         self.session.add(user)
         self.session.commit()
         return user
