@@ -34,6 +34,7 @@ class Month(enum.Enum):
     November = 11
     December = 12
 
+
 class TimePeriod(str, enum.Enum):
     daily = "daily"
     monthly = "monthly"

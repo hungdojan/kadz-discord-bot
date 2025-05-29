@@ -9,9 +9,6 @@ from kadz_discord_bot.server_bot import ServerBot
 
 def main():
     load_dotenv()
-    intents = discord.Intents.default()
-    intents.message_content = True
-
     token = os.getenv("DISCORD_TOKEN", "")
     try:
         guild_id = int(os.getenv("DISCORD_GUILD_ID", "0"))

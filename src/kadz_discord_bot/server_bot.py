@@ -18,6 +18,7 @@ from kadz_discord_bot.utils import decode_hardle_result
 class ServerBot(commands.Bot):
     def __init__(self, channel_ids: dict[str, int], guild_id: int, database_path: Path):
         intents = discord.Intents.default()
+        intents.members = True
         intents.message_content = True
         super().__init__(command_prefix="!", intents=intents)
 
@@ -56,20 +57,23 @@ class ServerBot(commands.Bot):
         ):
             return
 
+        # extract info from data
         data = message.content.splitlines()
         day, nof_tries, run = decode_hardle_result(data)
         username = message.author.name
+        hardle_result_mgr = HardleResultManager(self.db_session)
 
+        # search for existing results
         user = UserManager(self.db_session).get_or_insert_user(username)
-        daily_result = HardleResultManager(self.db_session).get_user_results_daily(
-            user.username, day
-        )
+        daily_result = hardle_result_mgr.get_user_results_daily(user.username, day)
+        # detect collision
         if daily_result:
             raise DailyResultExistError(
                 f"Run by `{user.username}` from `{day}` already exists."
             )
 
-        HardleResultManager(self.db_session).insert_result(
+        # insert result and reply to a message
+        hardle_result_mgr.insert_result(
             user.username, nof_tries, day, datetime.now(timezone.utc), run
         )
         await message.reply(f"Run by `{user.username}` from `{day}` is registered.")

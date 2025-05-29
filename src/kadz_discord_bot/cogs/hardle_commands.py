@@ -1,8 +1,12 @@
+from datetime import datetime
+
 import discord
 from discord import Interaction, app_commands
 from discord.ext import commands
 
 import kadz_discord_bot.server_bot as server_bot
+from kadz_discord_bot.models.hardle_results import HardleResultManager
+from kadz_discord_bot.ui_views.hardle_result_embed import HardleResultEmbed
 from kadz_discord_bot.utils import TimePeriod
 
 
@@ -12,11 +16,17 @@ class HardleCommands(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="hardle-result", description="Get game run results.")
+    @app_commands.describe(
+        member="Member in question.",
+        date_str="The day of the run in YYYY-MM-DD format. Defaults to today.",
+        hide="Hide the output from everyone. Defaults to True",
+    )
     async def results(
         self,
         interaction: Interaction,
         member: discord.Member,
-        # day: date = datetime.today().date(),
+        date_str: str = f"{datetime.today().date()}",
+        hide: bool = True,
     ):
         """Display a specific game run of a user.
 
@@ -25,9 +35,21 @@ class HardleCommands(commands.Cog):
         :param member: A member of the server.
         :type member: discord.Memeber
         """
-        # TODO: add a day parameter; discord cannot parse date object
+
         # must be rewritten to string or find a better solution in the documentation
-        await interaction.response.send_message("results")
+        try:
+            day = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            await interaction.response.send_message(
+                f"Incorrect date format, enter YYYY-MM-DD."
+            )
+            return
+
+        result = HardleResultManager(self.bot.db_session).get_user_results_daily(
+            member.name, day
+        )
+        embed = HardleResultEmbed(result, interaction)
+        await interaction.response.send_message(embed=embed, ephemeral=hide)
 
     @app_commands.command(
         name="hardle-leaderboard",
