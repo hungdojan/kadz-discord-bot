@@ -12,7 +12,7 @@ from kadz_discord_bot.utils import CHAR_MAP
 class HardleResults(Base):
     __tablename__ = "hardle_results"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    username: Mapped[int] = mapped_column(
+    username: Mapped[str] = mapped_column(
         ForeignKey("users.username", ondelete="CASCADE"), nullable=False, index=True
     )
     nof_tries: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -72,6 +72,14 @@ class HardleResultManager(BaseManager):
         result = self.session.execute(query).scalars().all()
         return [item for item in result]
 
+    def get_all_daily_results(self, day: date, limit: int = -1) -> list[HardleResults]:
+        query = select(HardleResults).where(HardleResults.day_play == day)
+        if limit > 0:
+            query = query.limit(limit)
+        query = query.order_by(HardleResults.nof_tries)
+        results = self.session.execute(query).scalars().all()
+        return list(results)
+
     def get_user_results_daily(self, username: str, day: date) -> HardleResults | None:
         query = select(HardleResults).where(
             and_(
@@ -90,7 +98,7 @@ class HardleResultManager(BaseManager):
                 extract("year", HardleResults.day_play) == year,
                 extract("month", HardleResults.day_play) == month,
             )
-        )
+        ).order_by(HardleResults.day_play)
         result = self.session.execute(query).scalars().all()
         return [item for item in result]
 

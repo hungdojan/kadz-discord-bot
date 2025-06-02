@@ -1,11 +1,14 @@
 import enum
 from datetime import date, datetime
 
+import discord
+
 import kadz_discord_bot.models.base as base
 
 BLACK_SQUARE = b"\xe2\xac\x9b"
 YELLOW_SQUARE = b"\xf0\x9f\x9f\xa8"
 GREEN_SQUARE = b"\xf0\x9f\x9f\xa9"
+RED_SQUARE = b"\xf0\x9f\x9f\xa5"
 
 SQUARE_MAP = {
     BLACK_SQUARE.decode("utf-8"): "b",
@@ -17,6 +20,7 @@ CHAR_MAP = {
     "b": BLACK_SQUARE.decode("utf-8"),
     "y": YELLOW_SQUARE.decode("utf-8"),
     "g": GREEN_SQUARE.decode("utf-8"),
+    "r": RED_SQUARE.decode("utf-8"),
 }
 
 
@@ -68,3 +72,11 @@ def decode_hardle_result(content: list[str]) -> tuple[date, int, str]:
 
 def allowed_columns(data: dict, obj: type[base.Base]) -> dict:
     return {k: v for k, v in data.items() if k in obj.get_columns()}
+
+
+def display_username(username: str, interaction: discord.Interaction) -> str:
+    """Return username or a mention string (aka user tag)."""
+    if not interaction.guild:
+        return username
+    user = discord.utils.get(interaction.guild.members, name=username)
+    return user.mention if user else username

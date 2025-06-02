@@ -1,6 +1,7 @@
 import discord
 
 from kadz_discord_bot.models.hardle_results import HardleResults
+from kadz_discord_bot.utils import display_username
 
 
 class HardleResultEmbed(discord.Embed):
@@ -16,19 +17,13 @@ class HardleResultEmbed(discord.Embed):
     def _generate_result_view(
         self, result: HardleResults, interaction: discord.Interaction
     ):
-        def _get_member():
-            """Get member tag.
-
-            A plain username is used if user was not found (which should not happen).
-            """
-            if not interaction.guild:
-                return result.username
-            user = discord.utils.get(interaction.guild.members, name=result.username)
-            return user.mention if user else result.username
-
-        self.add_field(name="Player", value=f"{_get_member()}", inline=True)
+        self.add_field(
+            name="Player",
+            value=f"{display_username(result.username, interaction)}",
+            inline=True,
+        )
         self.add_field(name="Results", value=f"{result.nof_tries} / 10", inline=True)
-        self.add_field(name="Score", value=result.score)
+        self.add_field(name="Score", value=f"{result.score:.3f}")
         self.add_field(
             name=f"Run on {result.day_play.strftime('%d/%m/%Y')}",
             value=f"```{result.generate_run_str()}```",
